@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minhas Listas — Parceira Magalu</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue: #0086FF;
+  --blue-dark: #0060CC;
+  --blue-light: #E8F3FF;
+  --gold: #F5A623;
+  --bg: #F4F6FA;
+  --card: #FFFFFF;
+  --text: #18191F;
+  --text-2: #555B6E;
+  --text-3: #9BA3B8;
+  --border: #E4E8F0;
+  --radius: 16px;
+  --shadow: 0 2px 20px rgba(0,0,0,0.07);
+  --shadow-hover: 0 8px 32px rgba(0,134,255,0.15);
+}
+
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ═══════════════ TELA ═══════════════ */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ═══════════════ ADMIN ═══════════════ */
+.admin-header {
+  background: linear-gradient(135deg, #0060CC 0%, #0086FF 60%, #33AAFF 100%);
+  padding: 1.5rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+}
+.admin-brand { display: flex; align-items: center; gap: 12px; }
+.admin-brand .logo { width: 40px; height: 40px; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.admin-brand .logo svg { width: 24px; height: 24px; }
+.admin-brand h1 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: #fff; font-weight: 600; }
+.admin-brand span { font-size: .8rem; color: rgba(255,255,255,.7); display: block; margin-top: -2px; }
+.btn-new-list { background: #fff; color: var(--blue); border: none; border-radius: 10px; padding: 9px 18px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-new-list:hover { background: var(--blue-light); }
+
+.admin-body { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+.admin-section-title { font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 1rem; }
+
+/* Grid de listas */
+.lists-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+.list-card {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  padding: 1.25rem; cursor: pointer; transition: all .2s;
+  position: relative; overflow: hidden;
+}
+.list-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--blue), var(--gold)); }
+.list-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+.list-card-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; margin-bottom: .3rem; }
+.list-card-meta { font-size: .8rem; color: var(--text-3); margin-bottom: 1rem; }
+.list-card-actions { display: flex; gap: 8px; }
+.btn-sm { padding: 6px 12px; border-radius: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .78rem; font-weight: 500; cursor: pointer; border: none; transition: all .15s; }
+.btn-edit { background: var(--blue-light); color: var(--blue); }
+.btn-edit:hover { background: var(--blue); color: #fff; }
+.btn-share { background: #E8F7EE; color: #1A7A40; }
+.btn-share:hover { background: #1A7A40; color: #fff; }
+.btn-del-list { background: #FEE8E8; color: #CC2222; }
+.btn-del-list:hover { background: #CC2222; color: #fff; }
+
+.empty-state { text-align: center; padding: 3rem; color: var(--text-3); }
+.empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state p { font-size: .9rem; }
+
+/* ═══════════════ EDITOR ═══════════════ */
+.editor-header {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+.btn-back { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .82rem; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all .15s; }
+.btn-back:hover { border-color: var(--blue); color: var(--blue); }
+.editor-title-input { font-family: 'Playfair Display', serif; font-size: 1.3rem; border: none; outline: none; flex: 1; background: transparent; min-width: 160px; }
+.editor-title-input::placeholder { color: var(--text-3); }
+.btn-primary { background: var(--blue); color: #fff; border: none; border-radius: 10px; padding: 9px 20px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+.btn-primary:hover { background: var(--blue-dark); }
+
+.editor-body { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+/* Adicionar produto */
+.add-product-card {
+  background: var(--card); border-radius: var(--radius); border: 1.5px dashed var(--blue);
+  padding: 1.5rem; margin-bottom: 2rem;
+}
+.add-product-title { font-size: .85rem; font-weight: 600; color: var(--blue); margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; }
+.url-row { display: flex; gap: 10px; margin-bottom: 1rem; }
+.url-input { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 14px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .88rem; outline: none; transition: border .15s; }
+.url-input:focus { border-color: var(--blue); }
+.btn-fetch { background: var(--blue); color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .2s; min-width: 110px; }
+.btn-fetch:hover { background: var(--blue-dark); }
+.btn-fetch:disabled { opacity: .6; cursor: not-allowed; }
+
+.manual-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-group { display: flex; flex-direction: column; gap: 5px; }
+.field-group.full { grid-column: 1/-1; }
+.field-label { font-size: .75rem; font-weight: 600; color: var(--text-2); }
+.field-input { border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 12px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .85rem; outline: none; transition: border .15s; }
+.field-input:focus { border-color: var(--blue); }
+.btn-add-product { width: 100%; margin-top: 1rem; background: var(--blue-light); color: var(--blue); border: none; border-radius: 10px; padding: 11px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .88rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-add-product:hover { background: var(--blue); color: #fff; }
+
+/* Preview produto no editor */
+.preview-row { display: flex; align-items: center; gap: 12px; background: var(--blue-light); border-radius: 10px; padding: 10px 14px; margin-bottom: 1rem; }
+.preview-img { width: 56px; height: 56px; object-fit: contain; border-radius: 8px; background: #fff; border: 1px solid var(--border); }
+.preview-info { flex: 1; min-width: 0; }
+.preview-name { font-size: .88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.preview-price { font-size: .82rem; color: var(--blue); font-weight: 600; }
+.preview-clear { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 1.1rem; padding: 2px; }
+.preview-clear:hover { color: #CC2222; }
+
+/* Lista de produtos no editor */
+.products-list { display: flex; flex-direction: column; gap: 10px; }
+.product-item-editor {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  padding: 1rem; display: flex; align-items: center; gap: 12px;
+}
+.product-item-editor img { width: 64px; height: 64px; object-fit: contain; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); flex-shrink: 0; }
+.product-item-editor .pinfo { flex: 1; min-width: 0; }
+.product-item-editor .pname { font-size: .88rem; font-weight: 600; margin-bottom: 2px; }
+.product-item-editor .pprice { font-size: .82rem; color: var(--blue); font-weight: 600; }
+.product-item-editor .ppayment { font-size: .75rem; color: var(--text-3); }
+.product-item-editor .pshipping { font-size: .75rem; font-weight: 600; }
+.product-item-editor .pshipping.free { color: #1A7A40; }
+.product-item-editor .pshipping.paid { color: var(--text-2); }
+.product-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-remove-product { background: #FEE8E8; color: #CC2222; border: none; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: .8rem; transition: all .15s; }
+.btn-remove-product:hover { background: #CC2222; color: #fff; }
+.btn-edit-product { background: var(--blue-light); color: var(--blue); border: none; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: .8rem; transition: all .15s; }
+.btn-edit-product:hover { background: var(--blue); color: #fff; }
+.modal-edit { max-width: 520px; }
+.modal-edit .edit-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: .5rem; }
+.modal-edit .efield { display: flex; flex-direction: column; gap: 5px; }
+.modal-edit .efield.full { grid-column: 1/-1; }
+.modal-edit-actions { display: flex; gap: 8px; margin-top: 1.25rem; }
+.modal-edit-actions .btn-primary { flex: 1; justify-content: center; }
+.modal-edit-actions .btn-cancel { flex: 1; margin-top: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .85rem; cursor: pointer; }
+
+/* ═══════════════ CLIENTE ═══════════════ */
+.client-screen { background: #F0F4FA; }
+
+.client-header {
+  background: linear-gradient(135deg, #0060CC 0%, #0086FF 60%, #33AAFF 100%);
+  padding: 2rem 1.5rem 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.client-header::before {
+  content: ''; position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.client-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.15); color: #fff; border-radius: 99px; padding: 5px 14px; font-size: .75rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 1rem; backdrop-filter: blur(4px); }
+.client-list-name { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: .5rem; position: relative; }
+.client-list-sub { font-size: .88rem; color: rgba(255,255,255,.75); position: relative; }
+
+.client-body { max-width: 900px; margin: -1.5rem auto 0; padding: 0 1rem 4rem; position: relative; z-index: 1; }
+
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
+
+.product-card {
+  background: var(--card); border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--shadow); transition: all .25s; border: 1px solid transparent;
+  display: flex; flex-direction: column;
+}
+.product-card:hover { box-shadow: var(--shadow-hover); border-color: var(--blue); transform: translateY(-3px); }
+
+.product-card-img-wrap {
+  background: var(--bg); padding: 1.5rem; display: flex; align-items: center; justify-content: center;
+  height: 180px; position: relative;
+}
+.product-card-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.product-card-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; }
+.product-card-name { font-size: .88rem; font-weight: 600; color: var(--text); line-height: 1.45; margin-bottom: .5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.product-card-price { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: var(--blue); margin-bottom: .2rem; }
+.product-card-payment { font-size: .75rem; color: var(--text-3); margin-bottom: .4rem; }
+.product-card-shipping { font-size: .78rem; font-weight: 600; margin-bottom: 1rem; }
+.product-card-shipping.free { color: #1A7A40; }
+.product-card-shipping.paid { color: var(--text-2); }
+.btn-buy {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  background: linear-gradient(135deg, #0086FF, #0060CC);
+  color: #fff; text-decoration: none; border-radius: 10px;
+  padding: 11px; font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .85rem; font-weight: 600; margin-top: auto;
+  transition: all .2s; box-shadow: 0 4px 12px rgba(0,134,255,.3);
+}
+.btn-buy:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(0,134,255,.4); }
+.btn-buy svg { width: 14px; height: 14px; }
+
+.client-footer { text-align: center; padding: 2rem 1rem; font-size: .8rem; color: var(--text-3); }
+.client-footer strong { color: var(--blue); }
+
+/* ═══════════════ MODAL ═══════════════ */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--card); border-radius: 20px; padding: 1.75rem; max-width: 420px; width: 100%; }
+.modal h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: .5rem; }
+.modal p { font-size: .85rem; color: var(--text-2); margin-bottom: 1.25rem; }
+.share-link-box { display: flex; gap: 8px; }
+.share-link-input { flex: 1; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .82rem; outline: none; background: var(--bg); }
+.btn-copy { background: var(--blue); color: #fff; border: none; border-radius: 8px; padding: 9px 14px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .82rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn-copy:hover { background: var(--blue-dark); }
+.btn-close-modal { width: 100%; margin-top: 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .85rem; cursor: pointer; }
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #18191F; color: #fff; padding: 10px 22px; border-radius: 99px; font-size: .85rem; font-weight: 500; z-index: 200; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+/* Loading */
+.loading-dots { display: inline-flex; gap: 4px; }
+.loading-dots span { width: 6px; height: 6px; background: #fff; border-radius: 50%; animation: dot .8s ease-in-out infinite; }
+.loading-dots span:nth-child(2) { animation-delay: .15s; }
+.loading-dots span:nth-child(3) { animation-delay: .3s; }
+@keyframes dot { 0%,80%,100%{transform:scale(0.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
+
+@media (max-width: 600px) {
+  .admin-header { padding: 1rem; }
+  .editor-header { padding: 1rem; }
+  .editor-body, .admin-body { padding: 1rem; }
+  .manual-fields { grid-template-columns: 1fr; }
+  .client-list-name { font-size: 1.5rem; }
+  .products-grid { grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .product-card-img-wrap { height: 130px; padding: 1rem; }
+  .product-card-price { font-size: 1.1rem; }
+}
+@media (max-width: 380px) {
+  .products-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ TELA ADMIN ═══════ -->
+<div class="screen active" id="screen-admin">
+  <div class="admin-header">
+    <div class="admin-brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 6h18M3 12h18M3 18h18" stroke="#0086FF" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Minhas Listas</h1>
+        <span>Parceira Magalu</span>
+      </div>
+    </div>
+    <button class="btn-new-list" onclick="newList()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+      Nova Lista
+    </button>
+  </div>
+
+  <div class="admin-body">
+    <div class="admin-section-title">Suas listas</div>
+    <div class="lists-grid" id="lists-grid"></div>
+  </div>
+</div>
+
+<!-- ═══════ TELA EDITOR ═══════ -->
+<div class="screen" id="screen-editor">
+  <div class="editor-header">
+    <button class="btn-back" onclick="goAdmin()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Voltar
+    </button>
+    <input class="editor-title-input" id="editor-title" placeholder="Nome da lista (ex: Sala de Estar)" />
+    <button class="btn-primary" onclick="shareList()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Compartilhar
+    </button>
+  </div>
+
+  <div class="editor-body">
+    <!-- Adicionar produto -->
+    <div class="add-product-card">
+      <div class="add-product-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        Adicionar produto
+      </div>
+
+      <div class="url-row">
+        <input class="url-input" id="url-input" placeholder="Cole o link do produto da Magalu aqui…" />
+        <button class="btn-fetch" id="btn-fetch" onclick="fetchProduct()">Buscar</button>
+      </div>
+
+      <div id="preview-area"></div>
+
+      <div class="manual-fields">
+        <div class="field-group full">
+          <span class="field-label">Nome do produto *</span>
+          <input class="field-input" id="f-name" placeholder="Ex: Geladeira Brastemp Frost Free 375L" />
+        </div>
+        <div class="field-group">
+          <span class="field-label">Preço *</span>
+          <input class="field-input" id="f-price" placeholder="R$ 0,00" />
+        </div>
+        <div class="field-group">
+          <span class="field-label">Parcelamento</span>
+          <input class="field-input" id="f-payment" placeholder="Ex: 12x de R$ 99,90" />
+        </div>
+        <div class="field-group">
+          <span class="field-label">Frete</span>
+          <input class="field-input" id="f-shipping" placeholder="Ex: Grátis, R$ 19,90…" />
+        </div>
+        <div class="field-group full">
+          <span class="field-label">URL da imagem</span>
+          <input class="field-input" id="f-img" placeholder="https://…" />
+        </div>
+        <div class="field-group full">
+          <span class="field-label">Link de compra *</span>
+          <input class="field-input" id="f-link" placeholder="https://www.magazineluiza.com.br/…" />
+        </div>
+      </div>
+      <button class="btn-add-product" onclick="addProduct()">+ Adicionar à lista</button>
+    </div>
+
+    <!-- Produtos da lista -->
+    <div class="admin-section-title" id="products-count-label">Produtos na lista</div>
+    <div class="products-list" id="products-list-editor"></div>
+  </div>
+</div>
+
+<!-- ═══════ TELA CLIENTE ═══════ -->
+<div class="screen client-screen" id="screen-client">
+  <div class="client-header">
+    <div class="client-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Parceira Magalu
+    </div>
+    <div class="client-list-name" id="client-list-name">Lista de Produtos</div>
+    <div class="client-list-sub" id="client-list-sub">Seleção especial para você</div>
+  </div>
+
+  <div class="client-body">
+    <div class="products-grid" id="products-grid-client"></div>
+  </div>
+
+  <div class="client-footer">
+    Lista criada com ❤️ por <strong id="client-footer-name">Parceira Magalu</strong>
+  </div>
+</div>
+
+<!-- ═══════ MODAL COMPARTILHAR ═══════ -->
+<div class="modal-overlay" id="modal-share">
+  <div class="modal">
+    <h3>Compartilhar lista</h3>
+    <p>Copie o link abaixo e envie para seu cliente pelo WhatsApp ou qualquer outro canal.</p>
+    <div class="share-link-box">
+      <input class="share-link-input" id="share-link-input" readonly />
+      <button class="btn-copy" onclick="copyLink()">Copiar</button>
+    </div>
+    <button class="btn-close-modal" onclick="closeModal()">Fechar</button>
+  </div>
+</div>
+
+<!-- ═══════ MODAL EDITAR PRODUTO ═══════ -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal modal-edit">
+    <h3>Editar produto</h3>
+    <div class="edit-fields">
+      <div class="efield full">
+        <span class="field-label">Nome do produto *</span>
+        <input class="field-input" id="e-name" placeholder="Nome do produto" />
+      </div>
+      <div class="efield">
+        <span class="field-label">Preço *</span>
+        <input class="field-input" id="e-price" placeholder="R$ 0,00" />
+      </div>
+      <div class="efield">
+        <span class="field-label">Parcelamento</span>
+        <input class="field-input" id="e-payment" placeholder="Ex: 12x de R$ 99,90" />
+      </div>
+      <div class="efield">
+        <span class="field-label">Frete</span>
+        <input class="field-input" id="e-shipping" placeholder="Ex: Grátis, R$ 19,90…" />
+      </div>
+      <div class="efield full">
+        <span class="field-label">URL da imagem</span>
+        <input class="field-input" id="e-img" placeholder="https://…" />
+      </div>
+      <div class="efield full">
+        <span class="field-label">Link de compra *</span>
+        <input class="field-input" id="e-link" placeholder="https://…" />
+      </div>
+    </div>
+    <div class="modal-edit-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveEditProduct()">💾 Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════ ESTADO ═══════════════
+let lists = JSON.parse(localStorage.getItem('mglu_lists') || '[]');
+let currentListId = null;
+let pendingProduct = null;
+
+function save() {
+  localStorage.setItem('mglu_lists', JSON.stringify(lists));
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════ NAVEGAÇÃO ═══════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function goAdmin() {
+  saveCurrentList();
+  showScreen('screen-admin');
+  renderAdmin();
+}
+
+// ═══════════════ ADMIN ═══════════════
+function renderAdmin() {
+  const grid = document.getElementById('lists-grid');
+  if (!lists.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="icon">📋</div>
+      <p>Nenhuma lista criada ainda.<br>Clique em <strong>Nova Lista</strong> para começar!</p>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = lists.map(l => `
+    <div class="list-card">
+      <div class="list-card-name">${l.name || 'Lista sem nome'}</div>
+      <div class="list-card-meta">${l.products.length} produto${l.products.length !== 1 ? 's' : ''}</div>
+      <div class="list-card-actions">
+        <button class="btn-sm btn-edit" onclick="editList('${l.id}')">✏️ Editar</button>
+        <button class="btn-sm btn-share" onclick="shareDirect('${l.id}')">🔗 Compartilhar</button>
+        <button class="btn-sm btn-del-list" onclick="deleteList('${l.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function newList() {
+  const id = uid();
+  lists.push({ id, name: '', products: [] });
+  save();
+  editList(id);
+}
+
+function deleteList(id) {
+  if (!confirm('Excluir esta lista?')) return;
+  lists = lists.filter(l => l.id !== id);
+  save();
+  renderAdmin();
+}
+
+function shareDirect(id) {
+  currentListId = id;
+  openShareModal();
+}
+
+// ═══════════════ EDITOR ═══════════════
+function editList(id) {
+  currentListId = id;
+  const list = lists.find(l => l.id === id);
+  document.getElementById('editor-title').value = list.name;
+  clearForm();
+  renderEditorProducts();
+  showScreen('screen-editor');
+}
+
+function saveCurrentList() {
+  if (!currentListId) return;
+  const list = lists.find(l => l.id === currentListId);
+  if (!list) return;
+  list.name = document.getElementById('editor-title').value.trim() || 'Lista sem nome';
+  save();
+}
+
+function renderEditorProducts() {
+  const list = lists.find(l => l.id === currentListId);
+  const container = document.getElementById('products-list-editor');
+  const label = document.getElementById('products-count-label');
+  label.textContent = `Produtos na lista (${list.products.length})`;
+
+  if (!list.products.length) {
+    container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-3);font-size:.88rem">Nenhum produto ainda. Adicione o primeiro acima!</div>`;
+    return;
+  }
+
+  container.innerHTML = list.products.map((p, i) => `
+    <div class="product-item-editor">
+      <img src="${p.img || 'https://via.placeholder.com/64x64/E8F3FF/0086FF?text=📦'}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/64x64/E8F3FF/0086FF?text=📦'" />
+      <div class="pinfo">
+        <div class="pname">${p.name}</div>
+        <div class="pprice">${p.price}</div>
+        <div class="ppayment">${p.payment || ''}</div>
+        ${p.shipping ? `<div class="pshipping ${p.shipping.toLowerCase().includes('grát') ? 'free' : 'paid'}">🚚 ${p.shipping}</div>` : ''}
+      </div>
+      <div class="product-item-actions">
+        <button class="btn-edit-product" onclick="openEditModal(${i})">✏️ Editar</button>
+        <button class="btn-remove-product" onclick="removeProduct(${i})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeProduct(i) {
+  const list = lists.find(l => l.id === currentListId);
+  list.products.splice(i, 1);
+  save();
+  renderEditorProducts();
+}
+
+function addProduct() {
+  const name = document.getElementById('f-name').value.trim();
+  const price = document.getElementById('f-price').value.trim();
+  const link = document.getElementById('f-link').value.trim();
+
+  if (!name || !price || !link) {
+    toast('⚠️ Preencha pelo menos nome, preço e link');
+    return;
+  }
+
+  const list = lists.find(l => l.id === currentListId);
+  list.products.push({
+    name,
+    price,
+    payment: document.getElementById('f-payment').value.trim(),
+    shipping: document.getElementById('f-shipping').value.trim(),
+    img: document.getElementById('f-img').value.trim(),
+    link
+  });
+  save();
+  clearForm();
+  renderEditorProducts();
+  toast('✅ Produto adicionado!');
+}
+
+function clearForm() {
+  ['f-name','f-price','f-payment','f-shipping','f-img','f-link','url-input'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('preview-area').innerHTML = '';
+  pendingProduct = null;
+}
+
+// ═══════════════ EDITAR PRODUTO ═══════════════
+let editingIndex = null;
+
+function openEditModal(i) {
+  const list = lists.find(l => l.id === currentListId);
+  const p = list.products[i];
+  editingIndex = i;
+  document.getElementById('e-name').value = p.name || '';
+  document.getElementById('e-price').value = p.price || '';
+  document.getElementById('e-payment').value = p.payment || '';
+  document.getElementById('e-shipping').value = p.shipping || '';
+  document.getElementById('e-img').value = p.img || '';
+  document.getElementById('e-link').value = p.link || '';
+  document.getElementById('modal-edit').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('modal-edit').classList.remove('open');
+  editingIndex = null;
+}
+
+function saveEditProduct() {
+  if (editingIndex === null) return;
+  const name = document.getElementById('e-name').value.trim();
+  const price = document.getElementById('e-price').value.trim();
+  const link = document.getElementById('e-link').value.trim();
+  if (!name || !price || !link) { toast('⚠️ Preencha nome, preço e link'); return; }
+
+  const list = lists.find(l => l.id === currentListId);
+  list.products[editingIndex] = {
+    name,
+    price,
+    payment: document.getElementById('e-payment').value.trim(),
+    shipping: document.getElementById('e-shipping').value.trim(),
+    img: document.getElementById('e-img').value.trim(),
+    link
+  };
+  save();
+  closeEditModal();
+  renderEditorProducts();
+  toast('✅ Produto atualizado!');
+}
+
+
+async function fetchProduct() {
+  const url = document.getElementById('url-input').value.trim();
+  if (!url) { toast('Cole o link do produto primeiro'); return; }
+
+  const btn = document.getElementById('btn-fetch');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+
+  try {
+    // Extrai info do link da Magalu
+    const info = extractMagaluInfo(url);
+    populateForm(info);
+    showPreview(info);
+    toast('✅ Informações extraídas! Confira e ajuste se necessário.');
+  } catch(e) {
+    toast('⚠️ Não foi possível extrair. Preencha manualmente.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Buscar';
+}
+
+function extractMagaluInfo(url) {
+  // Extrai nome do slug da URL da Magalu
+  // Ex: https://www.magazineluiza.com.br/geladeira-brastemp-frost-free-375l/p/abc123/ed/efri/
+  let name = '';
+  try {
+    const path = new URL(url).pathname;
+    const slug = path.split('/').filter(Boolean)[0] || '';
+    name = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  } catch(e) {}
+
+  return {
+    name: name || '',
+    price: '',
+    payment: '',
+    img: '',
+    link: url
+  };
+}
+
+function populateForm(info) {
+  if (info.name) document.getElementById('f-name').value = info.name;
+  if (info.price) document.getElementById('f-price').value = info.price;
+  if (info.payment) document.getElementById('f-payment').value = info.payment;
+  if (info.img) document.getElementById('f-img').value = info.img;
+  if (info.link) document.getElementById('f-link').value = info.link;
+}
+
+function showPreview(info) {
+  if (!info.name) return;
+  const area = document.getElementById('preview-area');
+  area.innerHTML = `
+    <div class="preview-row">
+      ${info.img ? `<img class="preview-img" src="${info.img}" onerror="this.style.display='none'" />` : ''}
+      <div class="preview-info">
+        <div class="preview-name">${info.name}</div>
+        <div class="preview-price">${info.price || 'Preencha o preço abaixo'}</div>
+      </div>
+      <button class="preview-clear" onclick="clearForm()">✕</button>
+    </div>`;
+}
+
+// ═══════════════ COMPARTILHAR ═══════════════
+function shareList() {
+  saveCurrentList();
+  openShareModal();
+}
+
+function openShareModal() {
+  const list = lists.find(l => l.id === currentListId);
+  if (!list) return;
+  if (!list.products.length) { toast('⚠️ Adicione pelo menos um produto antes de compartilhar'); return; }
+
+  // Gera link com dados encoded na URL
+  const data = encodeURIComponent(JSON.stringify({ id: list.id, name: list.name, products: list.products }));
+  const baseUrl = window.location.href.split('?')[0].split('#')[0];
+  const link = `${baseUrl}?lista=${data}`;
+
+  document.getElementById('share-link-input').value = link;
+  document.getElementById('modal-share').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-share').classList.remove('open');
+}
+
+function copyLink() {
+  const input = document.getElementById('share-link-input');
+  input.select();
+  navigator.clipboard.writeText(input.value).then(() => {
+    toast('🔗 Link copiado!');
+    closeModal();
+  }).catch(() => {
+    document.execCommand('copy');
+    toast('🔗 Link copiado!');
+    closeModal();
+  });
+}
+
+// ═══════════════ TELA CLIENTE ═══════════════
+function renderClient(list) {
+  document.getElementById('client-list-name').textContent = list.name || 'Lista de Produtos';
+  document.getElementById('client-list-sub').textContent = `${list.products.length} produto${list.products.length !== 1 ? 's' : ''} selecionados especialmente para você`;
+
+  const grid = document.getElementById('products-grid-client');
+  grid.innerHTML = list.products.map(p => `
+    <div class="product-card">
+      <div class="product-card-img-wrap">
+        <img src="${p.img || ''}" alt="${p.name}"
+          onerror="this.parentElement.innerHTML='<div style=\'font-size:2.5rem\'>📦</div>'" />
+      </div>
+      <div class="product-card-body">
+        <div class="product-card-name">${p.name}</div>
+        <div class="product-card-price">${p.price}</div>
+        <div class="product-card-payment">${p.payment || '&nbsp;'}</div>
+        ${p.shipping ? `<div class="product-card-shipping ${p.shipping.toLowerCase().includes('grát') ? 'free' : 'paid'}">🚚 ${p.shipping}</div>` : '<div class="product-card-shipping">&nbsp;</div>'}
+        <a class="btn-buy" href="${p.link}" target="_blank" rel="noopener">
+          Comprar agora
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  `).join('');
+
+  showScreen('screen-client');
+}
+
+// ═══════════════ INIT ═══════════════
+function init() {
+  // Verifica se tem parâmetro ?lista= na URL (modo cliente)
+  const params = new URLSearchParams(window.location.search);
+  const listaParam = params.get('lista');
+
+  if (listaParam) {
+    try {
+      const list = JSON.parse(decodeURIComponent(listaParam));
+      renderClient(list);
+      return;
+    } catch(e) {
+      toast('⚠️ Link inválido');
+    }
+  }
+
+  // Modo admin
+  renderAdmin();
+  showScreen('screen-admin');
+}
+
+document.getElementById('modal-edit').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+
+// Fecha modal ao clicar fora
+document.getElementById('modal-share').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Auto-salva título ao digitar
+document.getElementById('editor-title').addEventListener('input', function() {
+  saveCurrentList();
+});
+
+init();
+</script>
+</body>
+</html>
