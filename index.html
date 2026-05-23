@@ -669,24 +669,80 @@ function showPreview(info) {
     </div>`;
 }
 
+// ═══════════════ JSONBIN ═══════════════
+const JSONBIN_KEY = '$2a$10$ruQwM8YfS8iTtUjy6iYEo.63WYtm8ww/aD3DSYMnpGI/j/bFT/X.i';
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
+
+async function saveToCloud(list) {
+  const res = await fetch(JSONBIN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': JSONBIN_KEY,
+      'X-Bin-Name': list.name || 'lista',
+      'X-Bin-Private': 'false'
+    },
+    body: JSON.stringify({ name: list.name, products: list.products })
+  });
+  if (!res.ok) throw new Error('Erro ao salvar');
+  const data = await res.json();
+  return data.metadata.id;
+}
+
+async function loadFromCloud(binId) {
+  const res = await fetch(`${JSONBIN_URL}/${binId}/latest`, {
+    headers: { 'X-Master-Key': JSONBIN_KEY }
+  });
+  if (!res.ok) throw new Error('Lista não encontrada');
+  const data = await res.json();
+  return data.record;
+}
+
 // ═══════════════ COMPARTILHAR ═══════════════
 function shareList() {
   saveCurrentList();
   openShareModal();
 }
 
-function openShareModal() {
+async function openShareModal() {
   const list = lists.find(l => l.id === currentListId);
   if (!list) return;
   if (!list.products.length) { toast('⚠️ Adicione pelo menos um produto antes de compartilhar'); return; }
 
-  // Gera link com dados encoded na URL
-  const data = encodeURIComponent(JSON.stringify({ id: list.id, name: list.name, products: list.products }));
-  const baseUrl = window.location.href.split('?')[0].split('#')[0];
-  const link = `${baseUrl}?lista=${data}`;
-
-  document.getElementById('share-link-input').value = link;
+  const input = document.getElementById('share-link-input');
+  const btnCopy = document.querySelector('.btn-copy');
+  input.value = 'Gerando link…';
+  btnCopy.disabled = true;
   document.getElementById('modal-share').classList.add('open');
+
+  try {
+    // Se já tem binId salvo, atualiza; senão cria novo
+    let binId = list.binId;
+    if (binId) {
+      // Atualiza bin existente
+      await fetch(`${JSONBIN_URL}/${binId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': JSONBIN_KEY
+        },
+        body: JSON.stringify({ name: list.name, products: list.products })
+      });
+    } else {
+      binId = await saveToCloud(list);
+      list.binId = binId;
+      save();
+    }
+
+    const baseUrl = window.location.href.split('?')[0].split('#')[0];
+    const link = `${baseUrl}?id=${binId}`;
+    input.value = link;
+    btnCopy.disabled = false;
+  } catch(e) {
+    input.value = 'Erro ao gerar link. Tente novamente.';
+    btnCopy.disabled = false;
+    toast('⚠️ Erro ao gerar link');
+  }
 }
 
 function closeModal() {
@@ -737,19 +793,31 @@ function renderClient(list) {
 }
 
 // ═══════════════ INIT ═══════════════
-function init() {
-  // Verifica se tem parâmetro ?lista= na URL (modo cliente)
+async function init() {
   const params = new URLSearchParams(window.location.search);
-  const listaParam = params.get('lista');
+  const binId = params.get('id');
 
-  if (listaParam) {
+  if (binId) {
+    // Modo cliente — carrega lista do JSONBin
+    showScreen('screen-client');
+    document.getElementById('client-list-name').textContent = 'Carregando lista…';
+    document.getElementById('products-grid-client').innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:3rem;color:#9BA3B8">
+        <div style="font-size:2rem;margin-bottom:1rem">⏳</div>
+        <p>Carregando produtos…</p>
+      </div>`;
     try {
-      const list = JSON.parse(decodeURIComponent(listaParam));
+      const list = await loadFromCloud(binId);
       renderClient(list);
-      return;
     } catch(e) {
-      toast('⚠️ Link inválido');
+      document.getElementById('client-list-name').textContent = 'Lista não encontrada';
+      document.getElementById('products-grid-client').innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:3rem;color:#9BA3B8">
+          <div style="font-size:2rem;margin-bottom:1rem">😕</div>
+          <p>Esta lista não existe ou foi removida.</p>
+        </div>`;
     }
+    return;
   }
 
   // Modo admin
